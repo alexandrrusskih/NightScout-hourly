@@ -50,7 +50,19 @@ prompt.get([{
   description: 'please enter the month you want to transfer to libreview',
   required: true,
   type: 'number',
-  default: new Date().getMonth()
+  default: new Date().getMonth() + 1
+}, {
+  name: 'day',
+  description: 'please enter the day you want to transfer to libreview',
+  required: true,
+  type: 'number',
+  default: new Date().getDate()
+}, {
+  name: 'count',
+  description: 'please enter amount of days before you want to transfer to libreview',
+  required: true,
+  type: 'number',
+  default: 1
 }, {
   name: 'libreResetDevice',
   description: 'if you have problems with your transfer, recreate your device id',
@@ -73,16 +85,16 @@ prompt.get([{
   fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
 
   (async () => {
-    const fromDate = dayjs(`${result.year}-${result.month}-01`).format('YYYY-MM-DD');
-    const toDate = dayjs(`${result.year}-${result.month + 1}-01`).format('YYYY-MM-DD');
+	  
+	const djsDate = dayjs(`${result.year}-${result.month}-${result.day}`);
+    const fromDate = djsDate.subtract(result.count - 1, 'day').format('YYYY-MM-DD');
+    const toDate = djsDate.add(1, 'day').format('YYYY-MM-DD');
 
-    console.log('transfer time span', fromDate.gray, toDate.gray);
+    console.log('transfer time span', fromDate.gray, '-', toDate.gray);
 
-    const glucoseEntries = await nightscout.getNightscoutGlucoseEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
-    const foodEntries = await nightscout.getNightscoutFoodEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
-    const insulinEntries = await nightscout.getNightscoutInsulinEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
+	const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
 
-    if (glucoseEntries.length > 0 || foodEntries.length > 0 || insulinEntries.length > 0) {
+    if (allData.glucoseEntries.length > 0 || allData.foodEntries.length > 0 || allData.insulinEntries.length > 0) {
       const auth = await libre.authLibreView(config.libreUsername, config.librePassword, config.libreDevice, result.libreResetDevice);
       if (!!!auth) {
         console.log('libre auth failed!'.red);
@@ -90,8 +102,13 @@ prompt.get([{
         return;
       }
 
-      await libre.transferLibreView(config.libreDevice, auth, glucoseEntries, foodEntries, insulinEntries);
+      await libre.transferLibreView(config.libreDevice, auth, allData.glucoseEntries, allData.foodEntries, allData.insulinEntries);
     }
+	else
+	{
+		console.log('No entries'.blue);
+	}
+	
   })();
 });
 
