@@ -23,14 +23,14 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
     }
   });
   console.log('glucose entries read:', (response.data || []).length.toString());
-  let utcOffset;
+  const utcOffset = response.data[0].utcOffset;
+  console.log('UTC Ofseet:', utcOffset.toString());
   const dataGlucose = response.data.filter((value, index, Arr) => index % 2 == 0).map(d => {
 	
-    utcOffset = d.utcOffset;
-    const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
-    const sysTimeLocal = dayjs.utc(d.sysTime).utcOffset(utcOffset);
+	const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
+	const sysTimeLocal = dayjs.utc(d.sysTime).utcOffset(utcOffset);
 	
-    return {
+	return {
       "extendedProperties": {
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "canMerge": "true",
@@ -55,7 +55,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('food entries read:', (response1.data || []).length.toString());
   const dataFood =  response1.data.map(d => {
 
-    const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
 	
     return {
       extendedProperties: {
@@ -79,9 +79,9 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('insulin entries read:', (response2.data || []).length.toString());
   const dataInsulin = response2.data.map(d => {
 	
-    const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
 	
-    return {
+	return {
       extendedProperties: {
         factoryTimestamp: created_at_Local.format()
       },
