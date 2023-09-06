@@ -26,11 +26,10 @@ const selectData = function (entries) {
   for (const day of Object.values(groups)) {
     const dayEntries = day.filter(singleEntry => {
       const hour = dayjs(singleEntry.timestamp).hour();
-
-      return hour >= 7 && hour < 21;
+      return hour >= 6 && hour <= 23;
     });
 
-    const selectionSize = randomInt(8, 10);
+    const selectionSize = randomInt(8, 16);
 
     if (dayEntries.length < selectionSize) {
       result.push(...dayEntries);
@@ -61,13 +60,13 @@ const authLibreView = async function (username, password, device, setDevice) {
     Password: password
   };
 
-  const response = await axios.default.post('https://api-eu.libreview.io/lsl/api/nisperson/getauthentication', data, {
+  const response = await axios.default.post('https://api.libreview.ru/lsl/api/nisperson/getauthentication', data, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
 
-  console.log('authLibreView, response', response.data.gray);
+  console.log('authLibreView, response', JSON.stringify(response.data,null, 4).gray);
 
   if (response.data.status !== 0) {
     return;
@@ -93,7 +92,7 @@ const transferLibreView = async function (device, token, glucoseEntries, foodEnt
         device: {
           hardwareDescriptor: "iPhone14,2",
           osVersion: "15.4.1",
-          modelName: "com.abbott.librelink.de",
+          modelName: "com.freestylelibre.app.ru",
           osType: "iOS",
           uniqueIdentifier: device,
           hardwareName: "iPhone"
@@ -128,13 +127,13 @@ const transferLibreView = async function (device, token, glucoseEntries, foodEnt
     Domain: "Libreview"
   };
 
-  const response = await axios.default.post('https://api-eu.libreview.io/lsl/api/measurements', data, {
+  const response = await axios.default.post('https://api.libreview.ru/lsl/api/measurements', data, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
 
-  console.log('transferLibreView, response', response.data.gray);
+  console.log('transferLibreView, response', JSON.stringify(response.data,null, 4).gray);  
 };
 
 exports.authLibreView = authLibreView;
