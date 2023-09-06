@@ -1,6 +1,8 @@
 const axios = require('axios');
 const dayjs = require('dayjs');
 const colors = require('colors');
+const utc = require('dayjs/plugin/utc')
+dayjs.extend(utc);
 
 const getNightscoutToken = function (token) {
   if (token.trim() !== '') {
@@ -10,60 +12,9 @@ const getNightscoutToken = function (token) {
   return '';
 };
 
-const getNightscoutFoodEntries = async function (baseUrl, token, fromDate, toDate) {
-  const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lte]=${toDate}&find[eventType]=Meal%20Bolus&count=131072${getNightscoutToken(token)}`;
-  console.log('entries url', url1.gray);
-
-  const response1 = await axios.get(url1, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-
-  const data1 = response1.data.map(d => {
-    return {
-      id: parseInt(`2${dayjs(d['created_at']).format('YYYYMMDDHHmmss')}`),
-      timestamp: d['created_at'],
-      carbs: d.carbs,
-      absorptionTime: d.absorptionTime,
-      foodType: d.foodType
-    };
-  });
-
-  const url2 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lte]=${toDate}&find[eventType]=Carb%20Correction&count=131072${getNightscoutToken(token)}`;
-  console.log('entries url', url2.gray);
-
-  const response2 = await axios.get(url2, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-
-  const data2 = response2.data.map(d => {
-    return {
-      id: parseInt(`2${dayjs(d['created_at']).format('YYYYMMDDHHmmss')}`),
-      timestamp: d['created_at'],
-      carbs: d.carbs,
-      absorptionTime: d.absorptionTime,
-      foodType: d.foodType
-    };
-  });
-
-  return [...data1, ...data2].map(e => {
-    return {
-      extendedProperties: {
-        factoryTimestamp: e.timestamp
-      },
-      recordNumber: e.id,
-      timestamp: e.timestamp,
-      gramsCarbs: e.carbs,
-      foodType: "Unknown"
-    };
-  });
-};
-
-const getNightscoutGlucoseEntries = async function (baseUrl, token, fromDate, toDate) {
-  const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lte]=${toDate}&count=131072${getNightscoutToken(token)}`;
+const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate) {
+	
+  const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lt]=${toDate}&count=131072${getNightscoutToken(token)}`;
   console.log('glucose entries url', url.gray);
 
   const response = await axios.get(url, {
@@ -71,54 +22,53 @@ const getNightscoutGlucoseEntries = async function (baseUrl, token, fromDate, to
       'Content-Type': 'application/json'
     }
   });
-
-  const data = response.data.filter((value, index, Arr) => index % 3 == 0).map(d => {
-    return {
-      id: parseInt(`1${dayjs(d.dateString).format('YYYYMMDDHHmmss')}`),
-      sysTime: d.sysTime,
-      dateString: d.dateString,
-      sgv: d.sgv,
-      delta: d.delta,
-      direction: d.direction
-    };
-  });
-
-  return data.map(e => {
-    return {
+  console.log('glucose entries read:', (response.data || []).length.toString());
+  let utcOffset;
+  const dataGlucose = response.data.filter((value, index, Arr) => index % 2 == 0).map(d => {
+	
+	utcOffset = d.utcOffset;
+	const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);//.utc(true); d.utcOffset
+	const sysTimeLocal = dayjs.utc(d.sysTime).utcOffset(utcOffset);
+	
+	return {
       "extendedProperties": {
-        "highOutOfRange": e.sgv >= 400 ? "true" : "false",
+        "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "canMerge": "true",
         "isFirstAfterTimeChange": false,
-        "factoryTimestamp": e.sysTime,
-        "lowOutOfRange": e.sgv <= 40 ? "true" : "false"
+        "factoryTimestamp": sysTimeLocal.format(),
+        "lowOutOfRange": d.sgv <= 40 ? "true" : "false"
       },
-      "recordNumber": e.id,
-      "timestamp": e.dateString,
-      "valueInMgPerDl": e.sgv
-    };
+      "recordNumber": parseInt(`1${dateStringLocal.format('YYYYMMDDHHmmss')}`),
+      "timestamp": dateStringLocal.format(),
+      "valueInMgPerDl": d.sgv
+    };	
   });
-};
-
-const getNightscoutInsulinEntries = async function (baseUrl, token, fromDate, toDate) {
-  const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lte]=${toDate}&find[eventType]=Correction%20Bolus&count=131072${getNightscoutToken(token)}`;
-  console.log('insulin entries url', url1.gray);
+	
+  const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[carbs][$gt]=0&count=131072${getNightscoutToken(token)}`;
+  console.log('food entries url', url1.gray);
 
   const response1 = await axios.get(url1, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
+  console.log('food entries read:', (response1.data || []).length.toString());
+  const dataFood =  response1.data.map(d => {
 
-  const data1 = response1.data.map(d => {
+	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+	
     return {
-      id: parseInt(`4${dayjs(d['created_at']).format('YYYYMMDDHHmmss')}`),
-      timestamp: d['created_at'],
-      insulin: d.insulin,
-      duration: d.duration
+      extendedProperties: {
+			factoryTimestamp: created_at_Local.format()
+	  },
+	  recordNumber: parseInt(`2$created_at_Local.format('YYYYMMDDHHmmss')}`),
+	  timestamp: created_at_Local.format(),
+	  gramsCarbs: d.carbs,
+	  foodType: "Unknown"
     };
   });
-
-  const url2 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lte]=${toDate}&find[eventType]=Bolus&count=131072${getNightscoutToken(token)}`;
+  
+  const url2 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[insulin][$gt]=0&count=131072${getNightscoutToken(token)}`;
   console.log('insulin entries url', url2.gray);
 
   const response2 = await axios.get(url2, {
@@ -126,29 +76,23 @@ const getNightscoutInsulinEntries = async function (baseUrl, token, fromDate, to
       'Content-Type': 'application/json'
     }
   });
-
-  const data2 = response2.data.map(d => {
-    return {
-      id: parseInt(`4${dayjs(d['created_at']).format('YYYYMMDDHHmmss')}`),
-      timestamp: d['created_at'],
-      insulin: d.insulin,
-      duration: d.duration
-    };
-  });
-
-  return [...data1, ...data2].map(e => {
-    return {
+  console.log('insulin entries read:', (response2.data || []).length.toString());
+  const dataInsulin = response2.data.map(d => {
+	
+	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+	
+	return {
       extendedProperties: {
-        factoryTimestamp: e.timestamp
+        factoryTimestamp: created_at_Local.format()
       },
-      recordNumber: e.id,
-      timestamp: e.timestamp,
-      units: e.insulin,
+      recordNumber: parseInt(`4$created_at_Local.format('YYYYMMDDHHmmss')}`),
+      timestamp: created_at_Local.format(),
+      units: d.insulin,
       insulinType: "RapidActing"
     };
-  });
+  });  
+ 
+  return {glucoseEntries:dataGlucose,foodEntries:dataFood,insulinEntries:dataInsulin};
 };
 
-exports.getNightscoutFoodEntries = getNightscoutFoodEntries;
-exports.getNightscoutGlucoseEntries = getNightscoutGlucoseEntries;
-exports.getNightscoutInsulinEntries = getNightscoutInsulinEntries;
+exports.getNightscoutAllEntries = getNightscoutAllEntries;
