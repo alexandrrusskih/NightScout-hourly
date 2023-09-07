@@ -27,15 +27,14 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('UTC Offset:', utcOffset.toString());
   const dataGlucose = response.data.filter((value, index, Arr) => index % 3 == 0).map(d => {
 	
-	const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
-	const sysTimeLocal = dayjs.utc(d.sysTime).utcOffset(utcOffset);
+    const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
 	
-	return {
+    return {
       "extendedProperties": {
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "canMerge": "true",
         "isFirstAfterTimeChange": false,
-        "factoryTimestamp": sysTimeLocal.format(),
+        "factoryTimestamp": d.sysTime,
         "lowOutOfRange": d.sgv <= 40 ? "true" : "false"
       },
       "recordNumber": parseInt(`1${dateStringLocal.format('YYYYMMDDHHmmss')}`),
@@ -59,12 +58,12 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
 	
     return {
       extendedProperties: {
-			factoryTimestamp: created_at_Local.format()
-	  },
-	  recordNumber: parseInt(`2$created_at_Local.format('YYYYMMDDHHmmss')}`),
-	  timestamp: created_at_Local.format(),
-	  gramsCarbs: d.carbs,
-	  foodType: "Unknown"
+	factoryTimestamp: d['created_at']
+      },
+      recordNumber: parseInt(`2$created_at_Local.format('YYYYMMDDHHmmss')}`),
+      timestamp: created_at_Local.format(),
+      gramsCarbs: d.carbs,
+      foodType: "Unknown"
     };
   });
   
@@ -79,11 +78,11 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('insulin entries read:', (response2.data || []).length.toString());
   const dataInsulin = response2.data.map(d => {
 	
-	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+    const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
 	
-	return {
+    return {
       extendedProperties: {
-        factoryTimestamp: created_at_Local.format()
+        factoryTimestamp: d['created_at']
       },
       recordNumber: parseInt(`4$created_at_Local.format('YYYYMMDDHHmmss')}`),
       timestamp: created_at_Local.format(),
