@@ -25,7 +25,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('glucose entries read:', (response.data || []).length.toString());
   const utcOffset = response.data[0].utcOffset;
   console.log('UTC Offset:', utcOffset.toString());
-  const dataGlucose = response.data.filter((value, index, Arr) => index % 2 == 0).map(d => {
+  const dataGlucose = response.data.filter((value, index, Arr) => index % 3 == 0).map(d => {
 	
 	const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
 	const sysTimeLocal = dayjs.utc(d.sysTime).utcOffset(utcOffset);
