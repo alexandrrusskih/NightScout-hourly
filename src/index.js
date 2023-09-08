@@ -92,9 +92,9 @@ prompt.get([{
 
     console.log('transfer time span', fromDate.gray, '-', toDate.gray);
 
-	const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
+	const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);	
 
-    if (allData.glucoseEntries.length > 0 || allData.foodEntries.length > 0 || allData.insulinEntries.length > 0) {
+    if (allData.glucoseEntriesScheduled.length > 0 || allData.foodEntries.length > 0 || allData.insulinEntries.length > 0) {
       const auth = await libre.authLibreView(config.libreUsername, config.librePassword, config.libreDevice, result.libreResetDevice);
       if (!!!auth) {
         console.log('libre auth failed!'.red);
@@ -102,7 +102,7 @@ prompt.get([{
         return;
       }
 
-      await libre.transferLibreView(config.libreDevice, auth, allData.glucoseEntries, allData.foodEntries, allData.insulinEntries);
+      await libre.transferLibreView(config.libreDevice, auth, allData.glucoseEntriesScheduled, allData.glucoseEntriesUnscheduled, allData.foodEntries, allData.insulinEntries);
     }
 	else
 	{
