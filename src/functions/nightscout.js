@@ -40,7 +40,7 @@ const getDirection = function (value) {
 const selectData = function (entries) {
   // Group dates by day
   const groups = entries.reduce((acc, singleEntry) => {
-    const day = dayjs(singleEntry.dateString).format('YYYYMMDD');
+    const day = dayjs(singleEntry.dateString).format('YYYYMMDDHH');
 
     if (!acc[day]) {
       acc[day] = [];
@@ -59,7 +59,7 @@ const selectData = function (entries) {
       return hour >= 6 && hour <= 23;
     });
 
-    const selectionSize = randomInt(8, 20);
+    const selectionSize = randomInt(0, 1);
 
     if (dayEntries.length < selectionSize) {
       result.push(...dayEntries);
@@ -112,7 +112,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "lowOutOfRange": d.sgv <= 40 ? "true" : "false",
         "isFirstAfterTimeChange": false,
-        "canMerge": "true"
+        "CanMerge": "true"
       },
       "recordNumber": d.id,
       "timestamp": d.dateString
@@ -128,6 +128,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "trendArrow": getDirection(d.direction),
         "isActionable": true,
+        "CanMerge": "false",
         "isFirstAfterTimeChange": false
       },
       "recordNumber": d.id,
