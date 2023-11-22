@@ -85,14 +85,16 @@ prompt.get([{
   fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
 
   (async () => {
-	  
-	const djsDate = dayjs(`${result.year}-${result.month}-${result.day}`);
-    const fromDate = djsDate.subtract(result.count - 1, 'day').format('YYYY-MM-DD');
-    const toDate = djsDate.add(1, 'day').format('YYYY-MM-DD');
+
+    const offset = dayjs().utcOffset()
+
+    const djsDate = dayjs(`${result.year}-${result.month}-${result.day}`);
+    const fromDate = djsDate.subtract(result.count - 1, 'day').subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss');
+    const toDate = djsDate.add(1, 'day').subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss');
 
     console.log('transfer time span', fromDate.gray, '-', toDate.gray);
 
-	const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);	
+    const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
 
     if (allData.glucoseEntriesScheduled.length > 0 || allData.foodEntries.length > 0 || allData.insulinEntries.length > 0) {
       const auth = await libre.authLibreView(config.libreUsername, config.librePassword, config.libreDevice, result.libreResetDevice);
@@ -104,11 +106,10 @@ prompt.get([{
 
       await libre.transferLibreView(config.libreDevice, auth, allData.glucoseEntriesScheduled, allData.glucoseEntriesUnscheduled, allData.foodEntries, allData.insulinEntries);
     }
-	else
-	{
-		console.log('No entries'.blue);
-	}
-	
+    else {
+      console.log('No entries'.blue);
+    }
+
   })();
 });
 

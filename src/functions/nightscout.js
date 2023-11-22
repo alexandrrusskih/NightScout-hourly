@@ -17,7 +17,7 @@ const randomInt = function (min, max) {
 };
 
 const getDirection = function (value) {
-  
+
   switch (value) {
     case 'FortyFiveDown':
     case 'SingleDown':
@@ -31,7 +31,7 @@ const getDirection = function (value) {
     case 'TripleUp':
       return 'Rising';
 
-    case 'Flat':   
+    case 'Flat':
     default:
       return 'Stable';
   }
@@ -79,7 +79,7 @@ const selectData = function (entries) {
 };
 
 const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate) {
-	
+
   const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lt]=${toDate}&count=131072${getNightscoutToken(token)}`;
   console.log('glucose entries url', url.gray);
 
@@ -91,9 +91,9 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   console.log('glucose entries read:', (response.data || []).length.toString());
   const utcOffset = response.data[0].utcOffset;
   console.log('UTC Offset:', utcOffset.toString());
-  
+
   const dataGlucose = response.data.filter((value, index, Arr) => index % 3 == 0).map(d => {
-	const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
+    const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset);
     return {
       id: parseInt(`1${dateStringLocal.format('YYYYMMDDHHmmss')}`),
       sysTime: d.sysTime,
@@ -103,39 +103,39 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
       direction: d.direction
     };
   });
-  
-  const dataGlucoseScheduled = dataGlucose.map(d => {	
-	return {
-	  "valueInMgPerDl": d.sgv,
+
+  const dataGlucoseScheduled = dataGlucose.map(d => {
+    return {
+      "valueInMgPerDl": d.sgv,
       "extendedProperties": {
-		"factoryTimestamp": d.sysTime,
+        "factoryTimestamp": d.sysTime,
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
-	    "lowOutOfRange": d.sgv <= 40 ? "true" : "false",        
-        "isFirstAfterTimeChange": false,  
-		"canMerge": "true"
+        "lowOutOfRange": d.sgv <= 40 ? "true" : "false",
+        "isFirstAfterTimeChange": false,
+        "canMerge": "true"
       },
       "recordNumber": d.id,
-      "timestamp": d.dateString    
-    };	
+      "timestamp": d.dateString
+    };
   });
-	
-  const dataGlucoseUnscheduled = selectData(dataGlucose).map(d => {	
-	return {
-	  "valueInMgPerDl": d.sgv,
+
+  const dataGlucoseUnscheduled = selectData(dataGlucose).map(d => {
+    return {
+      "valueInMgPerDl": d.sgv,
       "extendedProperties": {
-		"factoryTimestamp": d.sysTime,
-		"lowOutOfRange": d.sgv <= 40 ? "true" : "false",
-        "highOutOfRange": d.sgv >= 400 ? "true" : "false",   
-		"trendArrow": getDirection(d.direction),
-		"isActionable": true,
-		"isFirstAfterTimeChange": false
+        "factoryTimestamp": d.sysTime,
+        "lowOutOfRange": d.sgv <= 40 ? "true" : "false",
+        "highOutOfRange": d.sgv >= 400 ? "true" : "false",
+        "trendArrow": getDirection(d.direction),
+        "isActionable": true,
+        "isFirstAfterTimeChange": false
       },
       "recordNumber": d.id,
-      "timestamp": d.dateString    
-    };	
+      "timestamp": d.dateString
+    };
   });
-  
-  
+
+
   const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[carbs][$gt]=0&count=131072${getNightscoutToken(token)}`;
   console.log('food entries url', url1.gray);
 
@@ -145,21 +145,21 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
     }
   });
   console.log('food entries read:', (response1.data || []).length.toString());
-  const dataFood =  response1.data.map(d => {
+  const dataFood = response1.data.map(d => {
 
-	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
-	
+    const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+
     return {
       extendedProperties: {
-		factoryTimestamp: d['created_at']
-	  },
-	  recordNumber: parseInt(`2$created_at_Local.format('YYYYMMDDHHmmss')}`),
-	  timestamp: created_at_Local.format(),
-	  gramsCarbs: d.carbs,
-	  foodType: "Unknown"
+        factoryTimestamp: d['created_at']
+      },
+      recordNumber: parseInt(`2$created_at_Local.format('YYYYMMDDHHmmss')}`),
+      timestamp: created_at_Local.format(),
+      gramsCarbs: d.carbs,
+      foodType: "Unknown"
     };
   });
-  
+
   const url2 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[insulin][$gt]=0&count=131072${getNightscoutToken(token)}`;
   console.log('insulin entries url', url2.gray);
 
@@ -170,12 +170,12 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
   });
   console.log('insulin entries read:', (response2.data || []).length.toString());
   const dataInsulin = response2.data.map(d => {
-	
-	const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
-	const longInsExp = /(Lantus|Toujeo)/i;
-	const longIns = longInsExp.test(d.insulinInjections || '');
-	
-	return {
+
+    const created_at_Local = dayjs.utc(d['created_at']).utcOffset(utcOffset);
+    const longInsExp = /(Lantus|Toujeo)/i;
+    const longIns = longInsExp.test(d.insulinInjections || '');
+
+    return {
       extendedProperties: {
         factoryTimestamp: d['created_at']
       },
@@ -184,9 +184,9 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
       units: d.insulin,
       insulinType: longIns ? "LongActing" : "RapidActing"
     };
-  });  
-  
-  return {glucoseEntriesScheduled:dataGlucoseScheduled,glucoseEntriesUnscheduled:dataGlucoseUnscheduled,foodEntries:dataFood,insulinEntries:dataInsulin};
+  });
+
+  return { glucoseEntriesScheduled: dataGlucoseScheduled, glucoseEntriesUnscheduled: dataGlucoseUnscheduled, foodEntries: dataFood, insulinEntries: dataInsulin };
 };
 
 exports.getNightscoutAllEntries = getNightscoutAllEntries;

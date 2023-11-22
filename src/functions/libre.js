@@ -21,7 +21,7 @@ const authLibreView = async function (username, password, device, setDevice) {
     }
   });
 
-  console.log('authLibreView, response', JSON.stringify(response.data,null, 4).gray);
+  console.log('authLibreView, response', JSON.stringify(response.data, null, 4).gray);
 
   if (response.data.status !== 0) {
     return;
@@ -37,7 +37,7 @@ const transferLibreView = async function (device, token, glucoseEntriesScheduled
   console.log('glucose entries unscheduled', (glucoseEntriesUnscheduled || []).length.toString().gray);
   console.log('food entries', (foodEntries || []).length.toString().gray);
   console.log('insulin entries', (insulinEntries || []).length.toString().gray);
- 
+
   const data = {
     UserToken: token,
     GatewayType: "FSLibreLink.iOS",
@@ -80,14 +80,14 @@ const transferLibreView = async function (device, token, glucoseEntriesScheduled
     },
     Domain: "Libreview"
   };
-    
+
   const response = await axios.default.post('https://api.libreview.ru/lsl/api/measurements', data, {
     headers: {
       'Content-Type': 'application/json'
     }
   });
 
-  console.log('transferLibreView, response', JSON.stringify(response.data,null, 4).gray);  
+  console.log('transferLibreView, response', JSON.stringify(response.data, null, 4).gray);
 };
 
 exports.authLibreView = authLibreView;
