@@ -128,7 +128,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
         "highOutOfRange": d.sgv >= 400 ? "true" : "false",
         "trendArrow": getDirection(d.direction),
         "isActionable": true,
-        "CanMerge": "false",
+        "CanMerge": "true",
         "isFirstAfterTimeChange": false
       },
       "recordNumber": d.id,
