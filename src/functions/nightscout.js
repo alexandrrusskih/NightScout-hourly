@@ -1,7 +1,8 @@
 const axios = require('axios');
 const dayjs = require('dayjs');
 const colors = require('colors');
-const utc = require('dayjs/plugin/utc')
+const utc = require('dayjs/plugin/utc');
+const { config } = require('dotenv');
 dayjs.extend(utc);
 
 const getNightscoutToken = function (token) {
@@ -37,7 +38,7 @@ const getDirection = function (value) {
   }
 };
 
-const selectData = function (entries) {
+const selectData = function (entries, hours) {
   // Group dates by day
   const groups = entries.reduce((acc, singleEntry) => {
     const day = dayjs(singleEntry.dateString).format('YYYYMMDDHH');
@@ -59,12 +60,12 @@ const selectData = function (entries) {
       return hour >= 6 && hour <= 23;
     });
 
-    const selectionSize = randomInt(0, 1);
+    console.log(hours)
+    const selectionSize = randomInt(hours - 1, hours);
 
     if (dayEntries.length < selectionSize) {
       result.push(...dayEntries);
     } else {
-      // Select 8 dates evenly distributed over the 7am-9pm range
       const slots = Array.from({ length: selectionSize }, (_, i) => i);
       const slotSize = Math.floor(dayEntries.length / selectionSize);
       const slotPositions = slots.map(slot => slot * slotSize);
@@ -78,7 +79,7 @@ const selectData = function (entries) {
   return result;
 };
 
-const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate) {
+const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate, hours) {
 
   const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lt]=${toDate}&count=131072${getNightscoutToken(token)}`;
   console.log('glucose entries url', url.gray);
@@ -119,7 +120,7 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
     };
   });
 
-  const dataGlucoseUnscheduled = selectData(dataGlucose).map(d => {
+  const dataGlucoseUnscheduled = selectData(dataGlucose, hours).map(d => {
     return {
       "valueInMgPerDl": d.sgv,
       "extendedProperties": {

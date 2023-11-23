@@ -90,14 +90,12 @@ let config = JSON.parse(rawConfig);
 
 (async () => {
   const offset = dayjs().utcOffset()
-  const djsDate = dayjs(`${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`);
-  // const djsDate = dayjs(`${result.year}-${result.month}-${result.day}`);
-  const fromDate = djsDate.subtract(config.count - 1, 'day').subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss');
-  const toDate = djsDate.add(1, 'day').subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss');
+  const toDate = dayjs(new Date()).subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss');
+  const fromDate = dayjs(toDate).subtract(config.hours * 60, 'minute').format('YYYY-MM-DDTHH:mm:ss');
 
   console.log('transfer time span', fromDate.gray, '-', toDate.gray);
 
-  const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate);
+  const allData = await nightscout.getNightscoutAllEntries(config.nightscoutUrl, config.nightscoutToken, fromDate, toDate, config.hours);
 
   if (allData.glucoseEntriesScheduled.length > 0 || allData.foodEntries.length > 0 || allData.insulinEntries.length > 0) {
     const auth = await libre.authLibreView(config.libreUsername, config.librePassword, config.libreDevice, config.libreResetDevice);
