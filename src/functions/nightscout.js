@@ -54,14 +54,14 @@ const selectData = function (entries, hours) {
 
   const result = [];
 
+
   for (const day of Object.values(groups)) {
     const dayEntries = day.filter(singleEntry => {
       const hour = dayjs(singleEntry.dateString).hour();
       return hour >= 6 && hour <= 23;
     });
 
-    console.log(hours)
-    const selectionSize = randomInt(hours - 1, hours);
+    const selectionSize = randomInt(1, 2);
 
     if (dayEntries.length < selectionSize) {
       result.push(...dayEntries);
@@ -76,8 +76,21 @@ const selectData = function (entries, hours) {
     }
   }
 
+  const lastPoint = entries[0] // последняя точка графика
+  const lastHour = dayjs(lastPoint.dateString).hour();
+  if (lastHour >= 6 && lastHour <= 23) {
+    result.push(lastPoint)
+  }
+
   return result;
 };
+
+const selectDataEnd = function (entries) {
+  result = [];
+  result.push(entries[0])
+  return result
+}
+
 
 const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate, hours) {
 
