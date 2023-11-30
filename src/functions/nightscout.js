@@ -38,41 +38,19 @@ const getDirection = function (value) {
   }
 };
 
-const selectData = function (entries, hours) {
-  // Group dates by day
-  const groups = entries.reduce((acc, singleEntry) => {
-    const day = dayjs(singleEntry.dateString).format('YYYYMMDDHH');
-
-    if (!acc[day]) {
-      acc[day] = [];
-    }
-
-    acc[day].push(singleEntry);
-
-    return acc;
-  }, {});
+const selectData = function (entries, min_count, max_count) {
+  const dayEntries = entries.filter(singleEntry => {
+    const hour = dayjs(singleEntry.dateString).hour();
+    return hour >= 6 && hour <= 23;
+  });
 
   const result = [];
-
-
-  for (const day of Object.values(groups)) {
-    const dayEntries = day.filter(singleEntry => {
-      const hour = dayjs(singleEntry.dateString).hour();
-      return hour >= 6 && hour <= 23;
-    });
-
-    const selectionSize = randomInt(1, 2);
-
-    if (dayEntries.length < selectionSize) {
-      result.push(...dayEntries);
-    } else {
-      const slots = Array.from({ length: selectionSize }, (_, i) => i);
-      const slotSize = Math.floor(dayEntries.length / selectionSize);
-      const slotPositions = slots.map(slot => slot * slotSize);
-      for (const pos of slotPositions) {
-        const slotDates = dayEntries.slice(pos, pos + slotSize);
-        result.push(slotDates[Math.floor(Math.random() * slotDates.length)]);
-      }
+  if (dayEntries != undefined) {
+    const selectionSize = randomInt(min_count, max_count);
+    const slotSize = Math.floor((dayEntries.length - 4) / selectionSize);
+    for (let index = 0; index < selectionSize; index++) {
+      const ind = randomInt(index * slotSize + 2, index * slotSize + 2 + slotSize) // не ставим в первые полчаса и последние полчаса
+      result.push(dayEntries[ind])
     }
   }
 
@@ -92,7 +70,7 @@ const selectDataEnd = function (entries) {
 }
 
 
-const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate, hours) {
+const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate, min_count, max_count, needPoints) {
 
   const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lt]=${toDate}&count=131072${getNightscoutToken(token)}`;
   console.log('glucose entries url', url.gray);
@@ -102,6 +80,9 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
       'Content-Type': 'application/json'
     }
   });
+
+
+
   console.log('glucose entries read:', (response.data || []).length.toString());
   const utcOffset = response.data[0].utcOffset;
   console.log('UTC Offset:', utcOffset.toString());
@@ -133,22 +114,25 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
     };
   });
 
-  const dataGlucoseUnscheduled = selectData(dataGlucose, hours).map(d => {
-    return {
-      "valueInMgPerDl": d.sgv,
-      "extendedProperties": {
-        "factoryTimestamp": d.sysTime,
-        "lowOutOfRange": d.sgv <= 40 ? "true" : "false",
-        "highOutOfRange": d.sgv >= 400 ? "true" : "false",
-        "trendArrow": getDirection(d.direction),
-        "isActionable": true,
-        "CanMerge": "true",
-        "isFirstAfterTimeChange": false
-      },
-      "recordNumber": d.id,
-      "timestamp": d.dateString
-    };
-  });
+  let dataGlucoseUnscheduled = []
+  if (needPoints) {
+    dataGlucoseUnscheduled = selectData(dataGlucose, min_count, max_count).map(d => {
+      return {
+        "valueInMgPerDl": d.sgv,
+        "extendedProperties": {
+          "factoryTimestamp": d.sysTime,
+          "lowOutOfRange": d.sgv <= 40 ? "true" : "false",
+          "highOutOfRange": d.sgv >= 400 ? "true" : "false",
+          "trendArrow": getDirection(d.direction),
+          "isActionable": true,
+          "CanMerge": "true",
+          "isFirstAfterTimeChange": false
+        },
+        "recordNumber": d.id,
+        "timestamp": d.dateString
+      };
+    });
+  }
 
 
   const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[carbs][$gt]=0&count=131072${getNightscoutToken(token)}`;
