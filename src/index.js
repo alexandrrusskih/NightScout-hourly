@@ -87,7 +87,8 @@ const difs = dayjs.duration(sensorDate.diff(toDate)).asDays()
 
 if (difs < 1 && difsetup > 1) {
   const h = nightscout.randomInt(10, 20) // время устоановки следующего датчика
-  if (toDate.format("HH") == sensorDate.hour()) {
+
+  if ((toDate.format("HH")) >= (sensorDate.hour() - 1) && (toDate.format("HH")) <= (sensorDate.hour() + 1)) {
     newSensor = true
     const newSensorDate = toDate.add(config.sensorDays, "days").hour(h).format("YYYY-MM-DDTHH:mm:ss")
 
