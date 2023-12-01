@@ -86,24 +86,18 @@ const difsetup = dayjs.duration(toDate.diff(setupDate)).asDays()
 const difs = dayjs.duration(sensorDate.diff(toDate)).asDays()
 
 if (difs < 1 && difsetup > 1) {
-  const h = nightscout.randomInt(10, 20) // время устоановки датчика
-  if (h == toDate.format("HH")) {
+  const h = nightscout.randomInt(10, 20) // время устоановки следующего датчика
+  if (toDate.format("HH") == sensorDate.hour()) {
     newSensor = true
-    const newSensorDate = toDate.add(config.sensorDays, "days").format("YYYY-MM-DD")
+    const newSensorDate = toDate.add(config.sensorDays, "days").hour(h).format("YYYY-MM-DDTHH:mm:ss")
+
     config = Object.assign({}, config, {
       newSensorDate: newSensorDate,  // новая дата установки датчика
-      setupDate: toDate.format("YYYY-MM-DD")  // новая дата установки датчика
+      setupDate: toDate.format("YYYY-MM-DD")  // дата последней установки датчика
     });
     //  fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
   }
 }
-// else sensorDate = sensorDate.format("YYYY-MM-DD")
-
-
-
-//   })
-// }
-
 
 (async () => {
   const offset = dayjs().utcOffset()

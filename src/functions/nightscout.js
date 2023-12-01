@@ -63,13 +63,6 @@ const selectData = function (entries, min_count, max_count) {
   return result;
 };
 
-const selectDataEnd = function (entries) {
-  result = [];
-  result.push(entries[0])
-  return result
-}
-
-
 const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate, min_count, max_count, needPoints) {
 
   const url = `${baseUrl}/api/v1/entries.json?find[dateString][$gte]=${fromDate}&find[dateString][$lt]=${toDate}&count=131072${getNightscoutToken(token)}`;
@@ -80,8 +73,6 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
       'Content-Type': 'application/json'
     }
   });
-
-
 
   console.log('glucose entries read:', (response.data || []).length.toString());
   const utcOffset = response.data[0].utcOffset;
@@ -133,7 +124,6 @@ const getNightscoutAllEntries = async function (baseUrl, token, fromDate, toDate
       };
     });
   }
-
 
   const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[carbs][$gt]=0&count=131072${getNightscoutToken(token)}`;
   console.log('food entries url', url1.gray);

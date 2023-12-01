@@ -42,10 +42,13 @@ const transferNewSensorLibreView = async function (device, token, fromDate) {
         "warmupTime": "60",
         "productType": "3"
       },
-      "recordNumber": 6629293633826390019,
-      "timestamp": fromDate
+      "recordNumber": parseInt(`66292$fromDate.format('YYYYMMDDHHmmss')}`),
+      "timestamp": dayjs(new Date()).format('YYYY-MM-DDTHH:mm:ss')
     }
   ];
+
+  // "recordNumber": 6629293633826390019,
+
   const data = {
     UserToken: token,
     GatewayType: "FSLibreLink.iOS",
@@ -92,12 +95,8 @@ const transferNewSensorLibreView = async function (device, token, fromDate) {
   console.log('transferNewSensor, response', JSON.stringify(response.data, null, 4).cyan);
 };
 
-
-
-
 const transferLibreView = async function (device, token, glucoseEntriesScheduled, glucoseEntriesUnscheduled, foodEntries, insulinEntries) {
   console.log('transferLibreView'.blue);
-
   console.log('glucose entries scheduled', (glucoseEntriesScheduled || []).length.toString().gray);
   console.log('glucose entries unscheduled', (glucoseEntriesUnscheduled || []).length.toString().gray);
   console.log('food entries', (foodEntries || []).length.toString().gray);
