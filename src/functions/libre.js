@@ -30,6 +30,71 @@ const authLibreView = async function (username, password, device, setDevice) {
   return response.data.result.UserToken;
 }
 
+const transferNewSensorLibreView = async function (device, token, fromDate) {
+  const genericEntries = [
+    {
+      "type": "com.abbottdiabetescare.informatics.sensorstart",
+      "extendedProperties": {
+        "factoryTimestamp": fromDate,
+        "gmin": "40",
+        "gmax": "500",
+        "wearDuration": "20160",
+        "warmupTime": "60",
+        "productType": "3"
+      },
+      "recordNumber": 6629293633826390019,
+      "timestamp": fromDate
+    }
+  ];
+  const data = {
+    UserToken: token,
+    GatewayType: "FSLibreLink.iOS",
+    DeviceData: {
+      header: {
+        device: {
+          hardwareDescriptor: "iPhone14,2",
+          osVersion: "15.4.1",
+          modelName: "com.freestylelibre.app.ru",
+          osType: "iOS",
+          uniqueIdentifier: device,
+          hardwareName: "iPhone"
+        }
+      },
+      measurementLog: {
+        capabilities: [
+          "scheduledContinuousGlucose",
+          "unscheduledContinuousGlucose",
+          "bloodGlucose",
+          "insulin",
+          "food",
+          "generic-com.abbottdiabetescare.informatics.exercise",
+          "generic-com.abbottdiabetescare.informatics.customnote",
+          "generic-com.abbottdiabetescare.informatics.ondemandalarm.low",
+          "generic-com.abbottdiabetescare.informatics.ondemandalarm.high",
+          "generic-com.abbottdiabetescare.informatics.ondemandalarm.projectedlow",
+          "generic-com.abbottdiabetescare.informatics.ondemandalarm.projectedhigh",
+          "generic-com.abbottdiabetescare.informatics.sensorstart",
+          "generic-com.abbottdiabetescare.informatics.error",
+          "generic-com.abbottdiabetescare.informatics.isfGlucoseAlarm",
+          "generic-com.abbottdiabetescare.informatics.alarmSetting"
+        ],
+        genericEntries: genericEntries
+      }
+    },
+    Domain: "Libreview"
+  };
+
+  const response = await axios.default.post('https://api.libreview.ru/lsl/api/measurements', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  console.log('transferNewSensor, response', JSON.stringify(response.data, null, 4).cyan);
+};
+
+
+
+
 const transferLibreView = async function (device, token, glucoseEntriesScheduled, glucoseEntriesUnscheduled, foodEntries, insulinEntries) {
   console.log('transferLibreView'.blue);
 
@@ -92,3 +157,4 @@ const transferLibreView = async function (device, token, glucoseEntriesScheduled
 
 exports.authLibreView = authLibreView;
 exports.transferLibreView = transferLibreView;
+exports.transferNewSensorLibreView = transferNewSensorLibreView;

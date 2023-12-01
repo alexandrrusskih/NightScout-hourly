@@ -4,4 +4,4 @@ samples
 
 # ignore config
 config.json
-.code-workspace
+*.code-workspace

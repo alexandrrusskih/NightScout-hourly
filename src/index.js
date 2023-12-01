@@ -1,12 +1,16 @@
 const dayjs = require('dayjs');
 const uuid = require('uuid');
+const duration = require('dayjs/plugin/duration');
 const colors = require('colors');
 const prompt = require('prompt');
 const fs = require('fs');
+dayjs.extend(duration);
 require('dotenv').config({ path: __dirname + '/../config.env' });
 
 const libre = require('./functions/libre');
 const nightscout = require('./functions/nightscout');
+const { log } = require('console');
+let newSensor = false;
 
 const CONFIG_NAME = 'config.json';
 const DEFAULT_CONFIG = {
@@ -74,29 +78,46 @@ let config = JSON.parse(rawConfig);
 //     if (err) {
 //       return onErr(err);
 //     }
+const sensorDate = dayjs(config.newSensorDate)  // дата след. установки датчика
+const setupDate = dayjs(config.setupDate) // дата последней установки датчика
+const toDate = dayjs(new Date())
 
-//     config = Object.assign({}, config, {
-//       nightscoutUrl: result.nightscoutUrl,
-//       count: result.count,
-//       nightscoutToken: result.nightscoutToken,
-//       libreUsername: result.libreUsername,
-//       librePassword: result.librePassword,
-//       libreDevice: (result.libreResetDevice || !!!config.libreDevice) ? uuid.v4().toUpperCase() : config.libreDevice
-//     });
+const difsetup = dayjs.duration(toDate.diff(setupDate)).asDays()
+const difs = dayjs.duration(sensorDate.diff(toDate)).asDays()
+
+if (difs < 1 && difsetup > 1) {
+  const h = nightscout.randomInt(10, 20) // время устоановки датчика
+  if (h == toDate.format("HH")) {
+    newSensor = true
+    const newSensorDate = toDate.add(config.sensorDays, "days").format("YYYY-MM-DD")
+    config = Object.assign({}, config, {
+      newSensorDate: newSensorDate,  // новая дата установки датчика
+      setupDate: toDate.format("YYYY-MM-DD")  // новая дата установки датчика
+    });
+    //  fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
+  }
+}
+// else sensorDate = sensorDate.format("YYYY-MM-DD")
+
+
 
 //   })
 // }
-// fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
+
 
 (async () => {
   const offset = dayjs().utcOffset()
   let needPoints = true
   const toDate = dayjs(new Date()).subtract(offset, 'minute').format('YYYY-MM-DDTHH:mm:ss'); // текущее время
   let fromDate = dayjs(toDate).subtract(config.hours * 60, 'minute').format('YYYY-MM-DDTHH:mm:ss');
-  const h = dayjs(toDate).hour();
+  if (newSensor) {  // если новый сенсор, то берём за 15 минут до текущего времени
+    fromDate = dayjs(toDate).subtract(15, 'minute').format('YYYY-MM-DDTHH:mm:ss');
+    needPoints = false
+  }
+  const h = dayjs(new Date()).hour();
   if (h <= 5) {
     needPoints = false  // ставить точки не нужно
-    fromDate = dayjs(toDate).subtract(24, 'hour').format('YYYY-MM-DDTHH:mm:ss');
+    fromDate = dayjs(toDate).subtract(24, 'hour').format('YYYY-MM-DDTHH:mm:ss'); // берём сутки для заполнения возможных пробелов
   }
 
   console.log('transfer time span', fromDate.gray, '-', toDate.gray);
@@ -107,11 +128,14 @@ let config = JSON.parse(rawConfig);
     const auth = await libre.authLibreView(config.libreUsername, config.librePassword, config.libreDevice, config.libreResetDevice);
     if (!!!auth) {
       console.log('libre auth failed!'.red);
-
       return;
     }
 
     await libre.transferLibreView(config.libreDevice, auth, allData.glucoseEntriesScheduled, allData.glucoseEntriesUnscheduled, allData.foodEntries, allData.insulinEntries);
+    if (newSensor) {
+      await libre.transferNewSensorLibreView(config.libreDevice, auth, fromDate); //корректируем время UTC
+    }
+    fs.writeFileSync(CONFIG_NAME, JSON.stringify(config));
   }
   else {
     console.log('No entries'.blue);
