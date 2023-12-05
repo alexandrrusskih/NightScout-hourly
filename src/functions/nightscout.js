@@ -89,17 +89,19 @@ const getNightscoutAllEntries = async function (
   const utcOffset = response.data[0].utcOffset
   console.log('UTC Offset:', utcOffset.toString())
 
-  const dataGlucose = response.data.map(d => {
-    const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset)
-    return {
-      id: parseInt(`1${dateStringLocal.format('YYYYMMDDHHmmss')}`),
-      sysTime: d.sysTime,
-      dateString: dateStringLocal.format(),
-      sgv: d.sgv,
-      delta: d.delta,
-      direction: d.direction
-    }
-  })
+  const dataGlucose = response.data
+    .filter((value, index, Arr) => index % 3 == 0)
+    .map(d => {
+      const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset)
+      return {
+        id: parseInt(`1${dateStringLocal.format('YYYYMMDDHHmmss')}`),
+        sysTime: d.sysTime,
+        dateString: dateStringLocal.format(),
+        sgv: d.sgv,
+        delta: d.delta,
+        direction: d.direction
+      }
+    })
 
   const dataGlucoseScheduled = dataGlucose.map(d => {
     return {
