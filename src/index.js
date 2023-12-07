@@ -111,21 +111,22 @@ if (difs < 1 && difsetup > 1 && config.newSensorEnabled == '1') {
   const toDate = dayjs(new Date())
     .subtract(offset, 'minute')
     .format('YYYY-MM-DDTHH:mm:ss') // текущее время
-  let fromDate = dayjs(toDate)
-    .subtract(config.hours * 60, 'minute')
-    .format('YYYY-MM-DDTHH:mm:ss')
+
+  fromDate = dayjs(toDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss') // от начала дня
+
   if (newSensor) {
     // если новый сенсор, то берём за 15 минут до текущего времени
     fromDate = dayjs(toDate)
       .subtract(15, 'minute')
       .format('YYYY-MM-DDTHH:mm:ss')
-    needPoints = false
-  }
-  const h = dayjs(new Date()).hour()
-  if (h <= 5) {
     needPoints = false // ставить точки не нужно
-    fromDate = dayjs(toDate).subtract(24, 'hour').format('YYYY-MM-DDTHH:mm:ss') // берём сутки для заполнения возможных пробелов
   }
+
+  // const h = dayjs(new Date()).hour()
+  // if (h <= 5) {
+  //   needPoints = false // ставить точки не нужно
+  //   fromDate = dayjs(toDate).subtract(24, 'hour').format('YYYY-MM-DDTHH:mm:ss') // берём сутки для заполнения возможных пробелов
+  // }
 
   console.log('transfer time span', fromDate.gray, '-', toDate.gray)
 

@@ -1,9 +1,11 @@
 const axios = require('axios')
 const dayjs = require('dayjs')
+const duration = require('dayjs/plugin/duration')
 const colors = require('colors')
 const utc = require('dayjs/plugin/utc')
 const { config } = require('dotenv')
 dayjs.extend(utc)
+dayjs.extend(duration)
 
 const getNightscoutToken = function (token) {
   if (token.trim() !== '') {
@@ -37,10 +39,15 @@ const getDirection = function (value) {
   }
 }
 
-const selectData = function (entries, min_count, max_count) {
+const selectData = function (toDate, entries, min_count, max_count) {
+  const fromDate = dayjs(toDate)
   const dayEntries = entries.filter(singleEntry => {
+    /// ночью не ставим
     const hour = dayjs(singleEntry.dateString).hour()
-    return hour > 6 && hour < 23
+    const diff = dayjs // ставим только на 2 часа назад
+      .duration(dayjs(singleEntry.dateString).diff(fromDate))
+      .hours()
+    return hour > 6 && hour < 23 && diff > 0 && diff <= 2
   })
 
   const result = []
@@ -61,7 +68,6 @@ const selectData = function (entries, min_count, max_count) {
   if (lastHour > 6 && lastHour < 23) {
     result.push(lastPoint)
   }
-
   return result
 }
 
@@ -120,24 +126,27 @@ const getNightscoutAllEntries = async function (
 
   let dataGlucoseUnscheduled = []
   if (needPoints) {
-    dataGlucoseUnscheduled = selectData(dataGlucose, min_count, max_count).map(
-      d => {
-        return {
-          valueInMgPerDl: d.sgv,
-          extendedProperties: {
-            factoryTimestamp: d.sysTime,
-            lowOutOfRange: d.sgv <= 40 ? 'true' : 'false',
-            highOutOfRange: d.sgv >= 400 ? 'true' : 'false',
-            trendArrow: getDirection(d.direction),
-            isActionable: true,
-            CanMerge: 'true',
-            isFirstAfterTimeChange: false
-          },
-          recordNumber: d.id,
-          timestamp: d.dateString
-        }
+    dataGlucoseUnscheduled = selectData(
+      toDate,
+      dataGlucose,
+      min_count,
+      max_count
+    ).map(d => {
+      return {
+        valueInMgPerDl: d.sgv,
+        extendedProperties: {
+          factoryTimestamp: d.sysTime,
+          lowOutOfRange: d.sgv <= 40 ? 'true' : 'false',
+          highOutOfRange: d.sgv >= 400 ? 'true' : 'false',
+          trendArrow: getDirection(d.direction),
+          isActionable: true,
+          CanMerge: 'true',
+          isFirstAfterTimeChange: false
+        },
+        recordNumber: d.id,
+        timestamp: d.dateString
       }
-    )
+    })
   }
 
   const url1 = `${baseUrl}/api/v1/treatments.json?find[created_at][$gte]=${fromDate}&find[created_at][$lt]=${toDate}&find[carbs][$gt]=0&count=131072${getNightscoutToken(
