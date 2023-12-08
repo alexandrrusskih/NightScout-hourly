@@ -112,7 +112,10 @@ if (difs < 1 && difsetup > 1 && config.newSensorEnabled == '1') {
     .subtract(offset, 'minute')
     .format('YYYY-MM-DDTHH:mm:ss') // текущее время
 
-  fromDate = dayjs(toDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss') // от начала дня
+  fromDate = dayjs(toDate)
+    .startOf('day')
+    .subtract(offset, 'minute')
+    .format('YYYY-MM-DDTHH:mm:ss') // от начала дня
 
   if (newSensor) {
     // если новый сенсор, то берём за 15 минут до текущего времени
