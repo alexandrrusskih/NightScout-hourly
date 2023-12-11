@@ -40,7 +40,7 @@ const getDirection = function (value) {
 }
 
 const selectData = function (toDate, entries, min_count, max_count) {
-  const fromDate = dayjs(toDate)
+  const fromDate = dayjs(toDate).add(dayjs().utcOffset(), 'minute')
   const dayEntries = entries.filter(singleEntry => {
     /// ночью не ставим
     const hour = dayjs(singleEntry.dateString).hour()
