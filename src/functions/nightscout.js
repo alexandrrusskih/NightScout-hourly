@@ -47,25 +47,22 @@ const selectData = function (toDate, entries, min_count, max_count) {
     const diff = dayjs // ставим только на 2 часа назад
       .duration(dayjs(singleEntry.dateString).diff(fromDate))
       .hours()
-    return hour > 6 && hour < 23 && diff > 0 && diff <= 2
+    return hour >= 6 && hour < 23 && diff >= -2 && diff <= 0
   })
 
   const result = []
-  if (dayEntries != undefined) {
+  if (dayEntries.length > 0) {
     const selectionSize = randomInt(min_count, max_count)
-    const slotSize = Math.floor((dayEntries.length - 4) / selectionSize)
+    const slotSize = Math.floor(dayEntries.length / selectionSize)
     for (let index = 0; index < selectionSize; index++) {
-      const ind = randomInt(
-        index * slotSize + 2,
-        index * slotSize + 2 + slotSize
-      ) // не ставим в первые полчаса и последние полчаса
+      const ind = randomInt(index * slotSize + 1, slotSize)
       result.push(dayEntries[ind])
     }
   }
 
   const lastPoint = entries[0] // последняя точка графика
   const lastHour = dayjs(lastPoint.dateString).hour()
-  if (lastHour > 6 && lastHour < 23) {
+  if (lastHour >= 6 && lastHour < 23) {
     result.push(lastPoint)
   }
   return result
