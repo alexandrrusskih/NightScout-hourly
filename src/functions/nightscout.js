@@ -94,6 +94,7 @@ const getNightscoutAllEntries = async function (
 
   const dataGlucose = response.data
     .filter((value, index, Arr) => index % 3 == 0)
+    .filter((value, index, Arr) => value.sgv > 30)
     .map(d => {
       const dateStringLocal = dayjs.utc(d.dateString).utcOffset(utcOffset)
       return {
