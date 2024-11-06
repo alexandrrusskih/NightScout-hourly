@@ -124,7 +124,7 @@ if (difs < 1 && difsetup > 1 && config.newSensorEnabled == '1') {
       .format('YYYY-MM-DDTHH:mm:ss')
     needPoints = false // ставить точки не нужно
   }
-  console.log(`UTC OFFSET ${offset} `.blue)
+  console.log('UTC Offset:', offset.toString())
 
   // const h = dayjs(new Date()).hour()
   // if (h <= 5) {
